@@ -26,6 +26,28 @@ Owner's Cloudflare bridge Worker
 Configured Yandex mailbox
 ```
 
+### Visual architecture map
+
+The diagram is available in **English and Russian**. Both language versions represent the same source-backed topology: the normal mail-read path is separate from OAuth setup, and the Site D1 signing key is kept apart from bridge D1 mail credentials and replay state.
+
+| English | Русский |
+| --- | --- |
+| [![Yandex Mail Dot Connector runtime architecture in English](assets/yandex-mail-dot-connector-architecture.svg)](assets/yandex-mail-dot-connector-architecture.svg) | [![Архитектура Yandex Mail Dot Connector на русском](assets/yandex-mail-dot-connector-architecture.ru.svg)](assets/yandex-mail-dot-connector-architecture.ru.svg) |
+
+**Interactive / local HTML:** [English](architecture/yandex-mail-dot-connector.html?lang=en) · [Русский](architecture/yandex-mail-dot-connector.html?lang=ru)
+
+**Archify typed source:** [English](architecture/yandex-mail-dot-connector.architecture.json) · [Русский](architecture/yandex-mail-dot-connector.ru.architecture.json)
+
+The interactive HTML selects Russian automatically for a Russian browser locale and also provides an explicit **Русский / English** switch. GitHub itself displays HTML files as source, so the two SVGs above are the directly viewable repository versions.
+
+The map has three reading modes:
+
+- **Mail read / Чтение почты** — `dot / MCP client → private Sites gate → Site adapter → signed bridge → read-only Yandex IMAP`
+- **OAuth setup / Настройка OAuth** — owner setup creates the Site signing key; a signed `/v1/oauth/start` begins authorization-code + PKCE, and the bridge validates the resulting mailbox token before storing it
+- **Secrets & state / Ключи и состояние** — Site D1 stores the Ed25519 private/public JWK pair; bridge D1 separately stores the owner-bound mail token, OAuth state, and used nonces
+
+Both JSON sources are pinned to repository revision `bcab88f1eb26fee17c1ab7935d26fe4f97523927`. The checked-in SVG and HTML are reviewable previews; upstream Archify `finalize` / browser gates were not run for this commit.
+
 The bridge has a public HTTPS address because Yandex must reach its callback and the Site must call it. Mail routes are protected by signed requests. The Site, by contrast, **must remain private behind Sites authentication**. A public raw Worker cannot trust caller-supplied `oai-authenticated-user-*` headers.
 
 ## Identity and authorization
