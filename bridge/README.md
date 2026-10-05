@@ -34,8 +34,8 @@ Read the complete [English](../docs/installation.en.md) or [Russian](../docs/ins
 The [Windows helper](windows/README.ru.md) supports two stages from this directory:
 
 ```powershell
-npx.cmd --yes --package=wrangler@4.145.0 node .\windows\setup.mjs bootstrap
-npx.cmd --yes --package=wrangler@4.145.0 node .\windows\setup.mjs configure
+npx.cmd --yes --package=wrangler@4.146.0 node .\windows\setup.mjs bootstrap
+npx.cmd --yes --package=wrangler@4.146.0 node .\windows\setup.mjs configure
 ```
 
 Run the second command only after completing your own Site/Yandex public settings. Bootstrap creates a fail-closed Worker and a dedicated D1, then prints the callback. Configure updates the same Worker. Both require deliberate confirmation before cloud changes. They do not run Yandex authorization or read mail.

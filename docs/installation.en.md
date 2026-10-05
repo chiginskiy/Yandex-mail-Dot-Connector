@@ -47,15 +47,15 @@ Run from the **`bridge` directory**, where `windows`, `dist`, and `package.json`
 Windows PowerShell:
 
 ```powershell
-npx.cmd --yes --package=wrangler@4.145.0 node .\windows\setup.mjs check
-npx.cmd --yes --package=wrangler@4.145.0 node .\windows\setup.mjs bootstrap
+npx.cmd --yes --package=wrangler@4.146.0 node .\windows\setup.mjs check
+npx.cmd --yes --package=wrangler@4.146.0 node .\windows\setup.mjs bootstrap
 ```
 
 POSIX shell, using the same helper:
 
 ```sh
-npx --yes --package=wrangler@4.145.0 node ./windows/setup.mjs check
-npx --yes --package=wrangler@4.145.0 node ./windows/setup.mjs bootstrap
+npx --yes --package=wrangler@4.146.0 node ./windows/setup.mjs check
+npx --yes --package=wrangler@4.146.0 node ./windows/setup.mjs bootstrap
 ```
 
 The helper's prompts are in Russian. `check` performs only local CLI and no-bundle dry-run checks. `bootstrap` repeats the dry-run, then:
@@ -79,7 +79,7 @@ The helper requests `account:read user:read workers_scripts:write d1:write`; Wra
 The helper attempts logout and removes that directory after login sessions. If interrupted:
 
 ```powershell
-npx.cmd --yes --package=wrangler@4.145.0 node .\windows\setup.mjs cleanup
+npx.cmd --yes --package=wrangler@4.146.0 node .\windows\setup.mjs cleanup
 ```
 
 Then verify server-side revocation at [Cloudflare Connected Applications](https://dash.cloudflare.com/profile/access-management/authorization), selecting the relevant Wrangler grant. A logout success message alone is not proof of successful server revocation. Do not delete unrelated tokens or applications.
@@ -136,7 +136,7 @@ In `bridge`, copy `windows/connect.example.json` to `windows/connect.json`, then
 The helper prefers `bridge/.local/connect.json` if it exists, otherwise uses `bridge/windows/connect.json`. Check which file you are editing. Both are local installation data and excluded from releases.
 
 ```powershell
-npx.cmd --yes --package=wrangler@4.145.0 node .\windows\setup.mjs configure
+npx.cmd --yes --package=wrangler@4.146.0 node .\windows\setup.mjs configure
 ```
 
 On POSIX use `npx` and `./windows/setup.mjs`. The helper validates public settings before login, shows the existing Worker and allowlist, asks for `CONFIGURE`, then `LOGIN`. It updates the original Worker and retains its D1. It does not authorize Yandex.
