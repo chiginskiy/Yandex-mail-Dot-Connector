@@ -19,7 +19,7 @@
   },
   "devDependencies": {
     "miniflare": "5.20260930.0-alpha",
-    "wrangler": "4.145.0"
+    "wrangler": "4.146.0"
   },
   "private": true,
   "engines": {
