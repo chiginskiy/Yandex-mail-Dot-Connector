@@ -47,15 +47,15 @@ npm run build
 Windows PowerShell:
 
 ```powershell
-npx.cmd --yes --package=wrangler@4.145.0 node .\windows\setup.mjs check
-npx.cmd --yes --package=wrangler@4.145.0 node .\windows\setup.mjs bootstrap
+npx.cmd --yes --package=wrangler@4.146.0 node .\windows\setup.mjs check
+npx.cmd --yes --package=wrangler@4.146.0 node .\windows\setup.mjs bootstrap
 ```
 
 POSIX shell, тот же помощник:
 
 ```sh
-npx --yes --package=wrangler@4.145.0 node ./windows/setup.mjs check
-npx --yes --package=wrangler@4.145.0 node ./windows/setup.mjs bootstrap
+npx --yes --package=wrangler@4.146.0 node ./windows/setup.mjs check
+npx --yes --package=wrangler@4.146.0 node ./windows/setup.mjs bootstrap
 ```
 
 Команда `check` проверяет CLI и локальную no-bundle сборку. `bootstrap` повторяет dry-run, затем:
@@ -79,7 +79,7 @@ npx --yes --package=wrangler@4.145.0 node ./windows/setup.mjs bootstrap
 После входа помощник пытается выполнить logout и удаляет эту папку. После прерывания:
 
 ```powershell
-npx.cmd --yes --package=wrangler@4.145.0 node .\windows\setup.mjs cleanup
+npx.cmd --yes --package=wrangler@4.146.0 node .\windows\setup.mjs cleanup
 ```
 
 Затем проверьте серверный отзыв в [Cloudflare Connected Applications](https://dash.cloudflare.com/profile/access-management/authorization), выбрав соответствующий grant Wrangler. Строка успешного logout не доказывает успешный серверный отзыв. Не удаляйте посторонние приложения и API tokens.
@@ -136,7 +136,7 @@ Origin задаётся без пути, завершающего `/`, query и 
 Если существует `bridge/.local/connect.json`, помощник предпочитает его, иначе читает `bridge/windows/connect.json`. Проверьте, какой файл редактируете. Оба относятся к локальным данным установки и исключаются из релиза.
 
 ```powershell
-npx.cmd --yes --package=wrangler@4.145.0 node .\windows\setup.mjs configure
+npx.cmd --yes --package=wrangler@4.146.0 node .\windows\setup.mjs configure
 ```
 
 Для POSIX замените `npx.cmd` на `npx` и путь на `./windows/setup.mjs`. Помощник проверяет настройки до входа, показывает прежний Worker и список папок, просит `CONFIGURE`, затем `LOGIN`. Он обновляет исходный Worker, сохраняя D1. Разрешение Яндекса не выдаётся этой командой.

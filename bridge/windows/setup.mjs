@@ -39,7 +39,7 @@ async function check() {
   const [major,minor]=process.versions.node.split('.').map(Number);
   if(major<22||(major===22&&minor<15))throw new Error('Нужен Node.js 22.15 или новее; рекомендуется Node.js 24');
   if(process.platform==='win32'&&Number(os.release().split('.')[2])<22000)console.log('Windows 10 официально не поддерживается Wrangler. Проверяем CLI и dry-run до входа; успех не гарантирует поддержку всех операций.');
-  if(!await exists(cli))throw new Error('Запускайте через: npx.cmd --yes --package=wrangler@4.145.0 node .\\windows\\setup.mjs bootstrap');
+  if(!await exists(cli))throw new Error('Запускайте через: npx.cmd --yes --package=wrangler@4.146.0 node .\\windows\\setup.mjs bootstrap');
   if(!await exists(path.join(root,'dist','bridge-wrapper.js')))throw new Error('В архиве отсутствует готовый dist/bridge-wrapper.js');
   await run(['--version']);
   const checkConfig=path.join(local,'wrangler.check.json');

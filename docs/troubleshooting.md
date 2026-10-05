@@ -42,7 +42,7 @@ Wrangler officially supports Windows 11, not Windows 10. The helper performs a d
 From the existing `bridge` directory:
 
 ```powershell
-npx.cmd --yes --package=wrangler@4.145.0 node .\windows\setup.mjs status
+npx.cmd --yes --package=wrangler@4.146.0 node .\windows\setup.mjs status
 ```
 
 State identifies what was attempted. `planned`, `creating-database`, `database-created`, `schema-created`, and `worker-published` are incomplete checkpoints; `bootstrap-complete` and `configured` are accepted for `configure`.

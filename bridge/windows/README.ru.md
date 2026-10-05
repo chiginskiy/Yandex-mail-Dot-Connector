@@ -25,7 +25,7 @@ npm.cmd run build
 ## 1. Локальная проверка
 
 ```powershell
-npx.cmd --yes --package=wrangler@4.145.0 node .\windows\setup.mjs check
+npx.cmd --yes --package=wrangler@4.146.0 node .\windows\setup.mjs check
 ```
 
 Ожидаемый результат: CLI и `--no-bundle --dry-run` прошли; вход и публикация не выполнялись. При ошибке остановитесь до входа и проверьте Node, ОС, распаковку и bundle.
@@ -35,7 +35,7 @@ npx.cmd --yes --package=wrangler@4.145.0 node .\windows\setup.mjs check
 Если bridge уже установлен, используйте раздел обновления ниже. Не повторяйте bootstrap для действующих ресурсов.
 
 ```powershell
-npx.cmd --yes --package=wrangler@4.145.0 node .\windows\setup.mjs bootstrap
+npx.cmd --yes --package=wrangler@4.146.0 node .\windows\setup.mjs bootstrap
 ```
 
 1. После dry-run помощник объяснит временные права. Введите `LOGIN`, только если согласны, и подтвердите device-code вход на официальной странице Cloudflare. Пароль вводится только там; токен не нужен в терминале или чате
@@ -77,7 +77,7 @@ JWK со страницы является объектом; в connect-файл
 Если существует `.local/connect.json`, помощник прочитает его вместо `windows/connect.json`. Не заменяйте существующий файл новым пустым примером. Реальные локальные настройки не должны попадать в Git или release ZIP.
 
 ```powershell
-npx.cmd --yes --package=wrangler@4.145.0 node .\windows\setup.mjs configure
+npx.cmd --yes --package=wrangler@4.146.0 node .\windows\setup.mjs configure
 ```
 
 Помощник проверит настройки, выполнит dry-run, покажет прежний Worker и разрешённые папки. Затем запросит `CONFIGURE` и отдельный `LOGIN`, проверит тот же аккаунт и обновит Worker. D1 и почтовый OAuth-доступ сохраняются. Yandex-авторизация не выполняется этой командой.
@@ -110,7 +110,7 @@ npx.cmd --yes --package=wrangler@4.145.0 node .\windows\setup.mjs configure
 После прерывания выполните:
 
 ```powershell
-npx.cmd --yes --package=wrangler@4.145.0 node .\windows\setup.mjs cleanup
+npx.cmd --yes --package=wrangler@4.146.0 node .\windows\setup.mjs cleanup
 ```
 
 Проверьте [Cloudflare Connected Applications](https://dash.cloudflare.com/profile/access-management/authorization) → соответствующий Wrangler grant → Revoke. Сообщение logout не гарантирует HTTP-успех серверного отзыва. Если grant отсутствует, отзывать нечего; не удаляйте посторонние API tokens.
@@ -120,7 +120,7 @@ npx.cmd --yes --package=wrangler@4.145.0 node .\windows\setup.mjs cleanup
 ## Если процесс прервался
 
 ```powershell
-npx.cmd --yes --package=wrangler@4.145.0 node .\windows\setup.mjs status
+npx.cmd --yes --package=wrangler@4.146.0 node .\windows\setup.mjs status
 ```
 
 Не удаляйте `.local/setup-state.json` и не повторяйте создание вслепую. Проверьте точные уже созданные ресурсы в своём аккаунте. Если Worker опубликован, а ввод URL прервался до конфигурации, возможен ограниченный recovery:
