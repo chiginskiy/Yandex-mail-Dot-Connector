@@ -1,0 +1,33 @@
+{
+  "name": "yandex-mail-readonly-bridge",
+  "version": "1.1.2",
+  "description": "Read-only Yandex IMAP bridge with owner-bound signed requests",
+  "main": "src/bridge-wrapper.mjs",
+  "scripts": {
+    "test": "node --test test/*.test.js windows/*.test.mjs",
+    "check": "node scripts/check.mjs",
+    "build": "node scripts/build.mjs",
+    "test:runtime": "node test/runtime-smoke.mjs",
+    "verify": "npm run check && npm test && npm run build && npm run test:runtime && npm run test:auth-runtime",
+    "test:auth-runtime": "node test/auth-runtime-smoke.mjs"
+  },
+  "license": "Apache-2.0",
+  "type": "module",
+  "dependencies": {
+    "htmlparser2": "10.0.0",
+    "imapflow": "2.2.1"
+  },
+  "devDependencies": {
+    "miniflare": "5.20260930.0-alpha",
+    "wrangler": "4.145.0"
+  },
+  "private": true,
+  "engines": {
+    "node": ">=22.15.0"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/chiginskiy/Yandex-mail-Dot-Connector.git",
+    "directory": "bridge"
+  }
+}

@@ -1,0 +1,10 @@
+{
+  "note": "Synthetic examples only. Replace the UID, UIDVALIDITY and part with values returned by your own authorized mailbox; never infer them.",
+  "requests": [
+    {"name":"yandex_mail_folders","arguments":{}},
+    {"name":"yandex_mail_list","arguments":{"mailbox":"INBOX","limit":5}},
+    {"name":"yandex_mail_search","arguments":{"mailbox":"INBOX","from":"sender@example.invalid","subject":"Connector test","limit":5}},
+    {"name":"yandex_mail_read","arguments":{"mailbox":"INBOX","uid":23,"uidValidity":"44"}},
+    {"name":"yandex_mail_attachment","arguments":{"mailbox":"INBOX","uid":23,"uidValidity":"44","part":"2","offset":0}}
+  ]
+}

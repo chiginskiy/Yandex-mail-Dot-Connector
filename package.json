@@ -1,0 +1,26 @@
+{
+  "name": "yandex-mail-dot-connector",
+  "version": "1.0.0-rc.1",
+  "private": true,
+  "type": "module",
+  "license": "Apache-2.0",
+  "description": "Read-only Yandex Mail connector for dot through private Sites and Cloudflare Workers",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/chiginskiy/Yandex-mail-Dot-Connector.git"
+  },
+  "engines": {
+    "node": ">=22.15.0"
+  },
+  "scripts": {
+    "deps": "npm ci --prefix bridge --ignore-scripts && npm ci --prefix site --ignore-scripts",
+    "check": "node scripts/check.mjs",
+    "test": "npm test --prefix bridge && npm test --prefix site && node --test test/*.test.mjs",
+    "build": "npm run build --prefix bridge && npm run build --prefix site",
+    "test:runtime": "npm run test:runtime --prefix bridge && npm run test:auth-runtime --prefix bridge",
+    "verify": "npm run check && npm test && npm run build && npm run test:runtime",
+    "package": "npm run build && node scripts/package-release.mjs",
+    "scan": "node scripts/scan-release.mjs",
+    "notices": "node scripts/generate-notices.mjs"
+  }
+}

@@ -1,0 +1,28 @@
+{
+  "name": "yandex-mail-readonly-bridge",
+  "main": "src/bridge-wrapper.mjs",
+  "compatibility_date": "2026-09-01",
+  "compatibility_flags": ["nodejs_compat"],
+  "workers_dev": true,
+  "preview_urls": false,
+  "observability": { "enabled": false },
+  "ratelimits": [
+    {"name":"PERIMETER_LIMITER","namespace_id":"71001","simple":{"limit":120,"period":60}},
+    {"name":"OWNER_LIMITER","namespace_id":"71002","simple":{"limit":30,"period":60}}
+  ],
+  "vars": {
+    "ALLOWED_MAILBOXES": "[\"INBOX\"]",
+    "YANDEX_OWNER_EMAIL": "REPLACE_WITH_OWNER_EMAIL",
+    "YANDEX_CLIENT_ID": "REPLACE_WITH_PUBLIC_CLIENT_ID",
+    "SITE_ID": "REPLACE_WITH_SITE_ID",
+    "OWNER_SITE_USER_ID": "REPLACE_WITH_OWNER_SITE_USER_ID",
+    "SITE_PUBLIC_KEY_JWK": "REPLACE_WITH_PUBLIC_JWK_JSON",
+    "SITE_ORIGIN": "https://REPLACE_WITH_PRIVATE_SITE_HOST",
+    "BRIDGE_ORIGIN": "https://REPLACE_WITH_WORKER_HOST"
+  },
+  "d1_databases": [{
+    "binding": "DB",
+    "database_name": "yandex-mail-readonly-bridge",
+    "database_id": "REPLACE_WITH_D1_DATABASE_ID"
+  }]
+}

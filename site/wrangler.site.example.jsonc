@@ -1,0 +1,7 @@
+{
+  // Local runtime testing only. Production Site publishing is owned by Sites.
+  "name": "private-yandex-mail-site-local",
+  "main": "src/site-worker.mjs",
+  "compatibility_date": "2026-10-01",
+  "d1_databases": [{ "binding": "DB", "database_name": "site-signing-keys", "database_id": "REPLACE_AT_SETUP" }]
+}

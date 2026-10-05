@@ -1,0 +1,32 @@
+{
+  "name": "yandex-mail-sites-adapter",
+  "version": "0.2.2",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "test": "node --test",
+    "build": "node scripts/build.mjs",
+    "db:generate": "drizzle-kit generate"
+  },
+  "engines": {
+    "node": ">=22.15.0"
+  },
+  "dependencies": {
+    "drizzle-orm": "0.45.2"
+  },
+  "devDependencies": {
+    "drizzle-kit": "0.31.11"
+  },
+  "license": "Apache-2.0",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/chiginskiy/Yandex-mail-Dot-Connector.git",
+    "directory": "site"
+  },
+  "description": "Private Sites MCP adapter for the read-only Yandex mail bridge",
+  "overrides": {
+    "@esbuild-kit/core-utils": {
+      "esbuild": "0.25.12"
+    }
+  }
+}

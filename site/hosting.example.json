@@ -1,0 +1,6 @@
+{
+  "project_id": "REPLACE_WITH_SITES_REGISTERED_PROJECT_ID",
+  "d1": "REPLACE_WITH_SITES_PRIVATE_D1_ID",
+  "r2": null,
+  "capabilities": ["mcp"]
+}
