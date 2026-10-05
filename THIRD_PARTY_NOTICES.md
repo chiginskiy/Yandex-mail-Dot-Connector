@@ -145,11 +145,11 @@ Redistributions in binary form must reproduce the above copyright notice, this l
 THIS IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS,
 EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-## drizzle-orm 0.45.2
+## drizzle-orm 0.45.3
 
 License: Apache-2.0
 
-By the Drizzle Team. The npm package declares Apache-2.0 and omits a LICENSE file. The upstream license is https://github.com/drizzle-team/drizzle-orm/blob/0.45.2/LICENSE; the identical standard Apache-2.0 terms are reproduced below. No dependency code is modified.
+By the Drizzle Team. The npm package declares Apache-2.0 and omits a LICENSE file. The upstream license is https://github.com/drizzle-team/drizzle-orm/blob/0.45.3/LICENSE; the identical standard Apache-2.0 terms are reproduced below. No dependency code is modified.
 
 Apache License
                            Version 2.0, January 2004
