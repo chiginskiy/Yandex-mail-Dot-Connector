@@ -1,0 +1,416 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "Yandex Mail Dot Connector — Runtime Architecture",
+    "output": "docs/architecture/yandex-mail-dot-connector.html",
+    "quality_profile": "showcase",
+    "locale": "en",
+    "repository": {
+      "url": "https://github.com/chiginskiy/Yandex-mail-Dot-Connector",
+      "provider": "github",
+      "link_mode": "web",
+      "revision": "bcab88f1eb26fee17c1ab7935d26fe4f97523927"
+    },
+    "views": [
+      {
+        "id": "mailRead",
+        "label": "Mail read",
+        "focus": [
+          "dot",
+          "sitesGate",
+          "siteAdapter",
+          "bridgeIngress",
+          "bridgeCore",
+          "yandexImap"
+        ],
+        "note": "Owner-authenticated MCP call to bounded read-only IMAP."
+      },
+      {
+        "id": "oauthSetup",
+        "label": "OAuth setup",
+        "focus": [
+          "owner",
+          "siteAdapter",
+          "siteD1",
+          "bridgeIngress",
+          "bridgeCore",
+          "bridgeD1",
+          "yandexOAuth"
+        ],
+        "note": "Explicit key initialization, PKCE authorization and bridge-side token storage."
+      },
+      {
+        "id": "secretsState",
+        "label": "Secrets & state",
+        "focus": [
+          "siteD1",
+          "bridgeD1",
+          "siteAdapter",
+          "bridgeCore"
+        ],
+        "note": "Private signing key and Yandex access token stay in separate stores."
+      }
+    ]
+  },
+  "components": [
+    {
+      "id": "owner",
+      "type": "external",
+      "label": "Owner / browser",
+      "sublabel": "setup + consent",
+      "pos": [
+        40,
+        80
+      ],
+      "size": [
+        150,
+        66
+      ],
+      "sources": [
+        {
+          "path": "site/src/site-worker.mjs",
+          "label": "setup UI"
+        }
+      ]
+    },
+    {
+      "id": "dot",
+      "type": "external",
+      "label": "dot / MCP client",
+      "sublabel": "five read-only tools",
+      "pos": [
+        40,
+        320
+      ],
+      "size": [
+        150,
+        66
+      ],
+      "sources": [
+        {
+          "path": "README.md",
+          "label": "tool surface"
+        }
+      ]
+    },
+    {
+      "id": "sitesGate",
+      "type": "security",
+      "label": "Private Sites gate",
+      "sublabel": "hosting auth + plugin OAuth",
+      "tag": "owner-only",
+      "pos": [
+        245,
+        320
+      ],
+      "size": [
+        168,
+        72
+      ],
+      "sources": [
+        {
+          "path": "site/src/site-worker.mjs",
+          "label": "private entry"
+        },
+        {
+          "path": "site/src/mcp.mjs",
+          "label": "owner auth"
+        }
+      ]
+    },
+    {
+      "id": "siteAdapter",
+      "type": "backend",
+      "label": "Site adapter",
+      "sublabel": "/mcp + setup API",
+      "pos": [
+        470,
+        320
+      ],
+      "size": [
+        166,
+        72
+      ],
+      "sources": [
+        {
+          "path": "site/src/site-worker.mjs",
+          "label": "routing"
+        },
+        {
+          "path": "site/src/mcp.mjs",
+          "label": "MCP bridge"
+        },
+        {
+          "path": "site/src/setup.mjs",
+          "label": "setup"
+        }
+      ]
+    },
+    {
+      "id": "siteD1",
+      "type": "database",
+      "label": "Site D1",
+      "sublabel": "Ed25519 private/public JWK",
+      "tag": "no mail token",
+      "pos": [
+        470,
+        515
+      ],
+      "size": [
+        166,
+        72
+      ],
+      "sources": [
+        {
+          "path": "site/src/d1-stores.mjs",
+          "label": "key store"
+        },
+        {
+          "path": "site/schema/site.sql",
+          "label": "schema"
+        }
+      ]
+    },
+    {
+      "id": "bridgeIngress",
+      "type": "security",
+      "label": "Bridge ingress",
+      "sublabel": "rate limits + signature gate",
+      "tag": "public HTTPS",
+      "pos": [
+        700,
+        320
+      ],
+      "size": [
+        176,
+        72
+      ],
+      "sources": [
+        {
+          "path": "bridge/src/bridge-wrapper.mjs",
+          "label": "composition"
+        },
+        {
+          "path": "bridge/src/signing.mjs",
+          "label": "signature"
+        },
+        {
+          "path": "bridge/src/rate-limit.js",
+          "label": "limits"
+        }
+      ]
+    },
+    {
+      "id": "bridgeCore",
+      "type": "backend",
+      "label": "Bridge core",
+      "sublabel": "OAuth + fixed mail routes",
+      "pos": [
+        940,
+        320
+      ],
+      "size": [
+        168,
+        72
+      ],
+      "sources": [
+        {
+          "path": "bridge/src/worker.js",
+          "label": "mail routes"
+        },
+        {
+          "path": "bridge/src/oauth.mjs",
+          "label": "OAuth"
+        },
+        {
+          "path": "bridge/src/imap.js",
+          "label": "IMAP"
+        }
+      ]
+    },
+    {
+      "id": "bridgeD1",
+      "type": "database",
+      "label": "Bridge D1",
+      "sublabel": "token + OAuth state + nonce",
+      "tag": "no private signing key",
+      "pos": [
+        940,
+        515
+      ],
+      "size": [
+        168,
+        72
+      ],
+      "sources": [
+        {
+          "path": "bridge/src/d1-stores.mjs",
+          "label": "store"
+        },
+        {
+          "path": "bridge/schema/bridge.sql",
+          "label": "schema"
+        }
+      ]
+    },
+    {
+      "id": "yandexOAuth",
+      "type": "external",
+      "label": "Yandex OAuth",
+      "sublabel": "authorization code + PKCE",
+      "tag": "mail:imap_ro",
+      "pos": [
+        940,
+        80
+      ],
+      "size": [
+        168,
+        72
+      ],
+      "sources": [
+        {
+          "path": "bridge/src/oauth.mjs",
+          "label": "fixed endpoints"
+        }
+      ]
+    },
+    {
+      "id": "yandexImap",
+      "type": "external",
+      "label": "Yandex Mail IMAP",
+      "sublabel": "imap.yandex.com:993",
+      "tag": "TLS + XOAUTH2",
+      "pos": [
+        1180,
+        320
+      ],
+      "size": [
+        176,
+        72
+      ],
+      "sources": [
+        {
+          "path": "bridge/src/imap.js",
+          "label": "read-only IMAP"
+        }
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "owner-setup",
+      "from": "owner",
+      "to": "siteAdapter",
+      "label": "setup / connect",
+      "variant": "dashed"
+    },
+    {
+      "id": "dot-sites",
+      "from": "dot",
+      "to": "sitesGate",
+      "label": "MCP",
+      "variant": "emphasis"
+    },
+    {
+      "id": "sites-site",
+      "from": "sitesGate",
+      "to": "siteAdapter",
+      "label": "trusted identity",
+      "variant": "security"
+    },
+    {
+      "id": "site-key",
+      "from": "siteAdapter",
+      "to": "siteD1",
+      "label": "signing key",
+      "variant": "security"
+    },
+    {
+      "id": "site-bridge",
+      "from": "siteAdapter",
+      "to": "bridgeIngress",
+      "label": "signed HTTPS POST",
+      "variant": "security"
+    },
+    {
+      "id": "ingress-core",
+      "from": "bridgeIngress",
+      "to": "bridgeCore",
+      "label": "verified owner request",
+      "variant": "emphasis"
+    },
+    {
+      "id": "core-state",
+      "from": "bridgeCore",
+      "to": "bridgeD1",
+      "label": "token / state / nonce"
+    },
+    {
+      "id": "core-imap",
+      "from": "bridgeCore",
+      "to": "yandexImap",
+      "label": "read-only TLS + XOAUTH2",
+      "variant": "emphasis"
+    },
+    {
+      "id": "owner-oauth",
+      "from": "owner",
+      "to": "yandexOAuth",
+      "label": "browser consent",
+      "variant": "dashed"
+    },
+    {
+      "id": "core-oauth",
+      "from": "bridgeCore",
+      "to": "yandexOAuth",
+      "label": "PKCE + token exchange",
+      "variant": "security"
+    },
+    {
+      "id": "oauth-callback",
+      "from": "yandexOAuth",
+      "to": "bridgeCore",
+      "label": "callback code",
+      "variant": "dashed"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "emerald",
+      "title": "Mail read path",
+      "items": [
+        "Five MCP tools map to a fixed bridge route allowlist.",
+        "Owner identity is validated at the private Site before tool execution.",
+        "Each bridge request is freshly signed; read operations use short read-only IMAP sessions."
+      ]
+    },
+    {
+      "dot": "violet",
+      "title": "Credential isolation",
+      "items": [
+        "Site D1 keeps the Ed25519 private signing key and never stores the mail token.",
+        "Bridge D1 keeps the owner-bound Yandex access token, OAuth state and used nonces.",
+        "The refresh token is deliberately discarded; expiry or revocation requires explicit reauthorization."
+      ]
+    },
+    {
+      "dot": "rose",
+      "title": "Trust boundaries",
+      "items": [
+        "The Site adapter is safe only behind authenticated private Sites hosting.",
+        "The bridge callback is public, while mail and OAuth-start routes require signed owner-bound requests.",
+        "Mailbox content, folder names and attachments remain untrusted input."
+      ]
+    },
+    {
+      "dot": "amber",
+      "title": "Operational bounds",
+      "items": [
+        "Perimeter limiting runs before cryptography/D1; owner limiting runs after signature verification.",
+        "No mailbox cache or connection pool is kept; one IMAP connection is used per request.",
+        "Message bodies, MIME traversal, folders, responses and attachment chunks are explicitly bounded."
+      ]
+    }
+  ]
+}

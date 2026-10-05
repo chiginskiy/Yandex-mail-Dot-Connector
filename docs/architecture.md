@@ -26,6 +26,23 @@ Owner's Cloudflare bridge Worker
 Configured Yandex mailbox
 ```
 
+### Visual architecture map
+
+The diagram below is a source-backed overview of the two deployed components and the external Yandex boundaries. It deliberately separates the normal mail-read path from OAuth setup and shows the credential split between Site D1 and bridge D1.
+
+[![Yandex Mail Dot Connector runtime architecture](assets/yandex-mail-dot-connector-architecture.svg)](architecture/yandex-mail-dot-connector.html)
+
+**[Open the interactive map](architecture/yandex-mail-dot-connector.html)** · [Archify typed source](architecture/yandex-mail-dot-connector.architecture.json)
+
+The map has three reading modes:
+
+- **Mail read** — `dot / MCP client → private Sites gate → Site adapter → signed bridge → read-only Yandex IMAP`
+- **OAuth setup** — owner setup creates the Site signing key; a signed `/v1/oauth/start` begins authorization-code + PKCE, and the bridge validates the resulting mailbox token before storing it
+- **Secrets & state** — Site D1 stores the Ed25519 private/public JWK pair; bridge D1 separately stores the owner-bound mail token, OAuth state, and used nonces
+
+The JSON follows the Archify v3 architecture schema and repository-evidence conventions and is pinned to repository revision `bcab88f1eb26fee17c1ab7935d26fe4f97523927`. The checked-in SVG and HTML are reviewable previews; upstream Archify `finalize` / browser gates were not run for this commit.
+
+
 The bridge has a public HTTPS address because Yandex must reach its callback and the Site must call it. Mail routes are protected by signed requests. The Site, by contrast, **must remain private behind Sites authentication**. A public raw Worker cannot trust caller-supplied `oai-authenticated-user-*` headers.
 
 ## Identity and authorization
