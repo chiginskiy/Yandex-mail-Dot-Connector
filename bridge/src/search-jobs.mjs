@@ -44,7 +44,7 @@ export function validateSearchQuery(input, kind) {
   const limit = input.limit ?? 20;
   const offset = input.offset ?? 0;
   if (kind === 'results' && (!Number.isInteger(limit) || limit < 1 || limit > MAX_RESULTS_PAGE ||
-    !Number.isInteger(offset) || offset < 0 || offset > 10000000)) raise(400, 'invalid_page');
+    !Number.isInteger(offset) || offset < 0 || offset > Number.MAX_SAFE_INTEGER)) raise(400, 'invalid_page');
   return { searchId: input.searchId, limit, offset };
 }
 const findJob = async (env, searchId) =>
