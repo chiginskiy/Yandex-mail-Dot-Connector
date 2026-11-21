@@ -81,7 +81,7 @@ TOOLS.push(
     description:'Fetch a page of persisted exhaustive search matches. Follow nextOffset until null AFTER job complete; partial results are preliminary.',
     inputSchema:{type:'object',properties:{searchId:{type:'string',pattern:SEARCH_JOB_ID},
       limit:{type:'integer',minimum:1,maximum:50,default:20},
-      offset:{type:'integer',minimum:0,maximum:10000000,default:0}},required:['searchId'],additionalProperties:false},annotations }
+      offset:{type:'integer',minimum:0,maximum:Number.MAX_SAFE_INTEGER,default:0}},required:['searchId'],additionalProperties:false},annotations }
 );
 const routeFor = Object.freeze({ yandex_mail_folders: '/v1/mailboxes/discover', yandex_mail_list: '/v1/messages/list', yandex_mail_search: '/v1/messages/search', yandex_mail_read: '/v1/messages/read', yandex_mail_attachment: '/v1/messages/attachment', yandex_mail_search_all: '/v1/search-jobs/start', yandex_mail_search_status: '/v1/search-jobs/status', yandex_mail_search_results: '/v1/search-jobs/results' });
 const headers = { 'Content-Type': 'application/json', 'Cache-Control': 'private, no-store', 'X-Content-Type-Options': 'nosniff' };
@@ -123,7 +123,7 @@ export function normalizeArgs(name, raw) {
     if (typeof raw.searchId !== 'string' || !new RegExp(SEARCH_JOB_ID).test(raw.searchId)) throw new Error('Invalid search ID');
     if (name === 'yandex_mail_search_status') return {searchId:raw.searchId};
     const limit=raw.limit ?? 20, offset=raw.offset ?? 0;
-    if (!Number.isInteger(limit)||limit<1||limit>50||!Number.isInteger(offset)||offset<0||offset>10000000)
+    if (!Number.isInteger(limit)||limit<1||limit>50||!Number.isInteger(offset)||offset<0||offset>Number.MAX_SAFE_INTEGER)
       throw new Error('Invalid results page');
     return {searchId:raw.searchId,limit,offset};
   }
@@ -257,7 +257,7 @@ TOOLS.push(
     description:'Fetch a page of persisted exhaustive-search matches in deterministic order. Follow nextOffset until null AFTER the job is complete. Partial results are preliminary; matchedTotal is the entire stored count.',
     inputSchema:{type:'object',properties:{searchId:{type:'string',pattern:SEARCH_JOB_ID},
       limit:{type:'integer',minimum:1,maximum:50,default:20},
-      offset:{type:'integer',minimum:0,maximum:10000000,default:0}},required:['searchId'],additionalProperties:false},annotations }
+      offset:{type:'integer',minimum:0,maximum:Number.MAX_SAFE_INTEGER,default:0}},required:['searchId'],additionalProperties:false},annotations }
 );
 
 const routeFor = Object.freeze({ yandex_mail_folders: '/v1/mailboxes/discover', yandex_mail_list: '/v1/messages/list', yandex_mail_search: '/v1/messages/search', yandex_mail_read: '/v1/messages/read', yandex_mail_attachment: '/v1/messages/attachment' });
