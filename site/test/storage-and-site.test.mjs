@@ -97,7 +97,7 @@ test('initial private Site works without Cloudflare; authorization and mail clea
   assert.equal(auth.status, 503);
   assert.equal((await auth.json()).error, 'configuration_required');
   const discovery = await post('/mcp', { jsonrpc: '2.0', id: 1, method: 'tools/list' });
-  assert.equal((await discovery.json()).result.tools.length, 5);
+  assert.equal((await discovery.json()).result.tools.length, 8);
   const mail = await post('/mcp', { jsonrpc: '2.0', id: 2, method: 'tools/call', params: { name: 'yandex_mail_list' } });
   const reply = (await mail.json()).result;
   assert.equal(reply.isError, true);
