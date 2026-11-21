@@ -63,7 +63,27 @@ export const TOOLS = [
   }
 ];
 
-const SEARCH_JOB_ID = '^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}{ yandex_mail_folders: '/v1/mailboxes/discover', yandex_mail_list: '/v1/messages/list', yandex_mail_search: '/v1/messages/search', yandex_mail_read: '/v1/messages/read', yandex_mail_attachment: '/v1/messages/attachment', yandex_mail_search_all: '/v1/search-jobs/start', yandex_mail_search_status: '/v1/search-jobs/status', yandex_mail_search_results: '/v1/search-jobs/results' });
+const SEARCH_JOB_ID = '^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$';
+const SEARCH_FILTERS = ['from','to','subject','text','since','before','unseen'];
+const SEARCH_FILTER_PROPERTIES = Object.fromEntries(SEARCH_FILTERS.map(name=>[name,
+  name==='unseen' ? {type:'boolean'} : name==='since'||name==='before' ? {type:'string',format:'date'} : {type:'string',minLength:1,maxLength:256}]));
+TOOLS.push(
+  { name:'yandex_mail_search_all', title:'Exhaustive Yandex mail search',
+    description:'Starts an owner-only exhaustive IMAP server search over ALL UID windows in selected allowlisted folders. Returns searchId, not a final result; call yandex_mail_search_status and then yandex_mail_search_results until nextOffset is null. Complete means every window scanned. IMAP BODY semantics can differ from visible HTML text. To resume interrupted job call with resumeSearchId only. Does not change mail.',
+    inputSchema:{type:'object',properties:{ mailboxes:{type:'array',items:{type:'string',minLength:1,maxLength:120},minItems:1,maxItems:20},
+      mode:{type:'string',enum:['imap_server'],default:'imap_server'},resumeSearchId:{type:'string',pattern:SEARCH_JOB_ID},
+      ...SEARCH_FILTER_PROPERTIES },additionalProperties:false},
+    annotations:{...annotations,readOnlyHint:false}},
+  { name:'yandex_mail_search_status', title:'Exhaustive search progress',
+    description:'Get owner-bound progress and explicit completeness for a searchId. Never say all messages found unless status=complete AND complete=true.',
+    inputSchema:{type:'object',properties:{searchId:{type:'string',pattern:SEARCH_JOB_ID}},required:['searchId'],additionalProperties:false},annotations },
+  { name:'yandex_mail_search_results', title:'Page through ALL exhaustive search matches',
+    description:'Fetch a page of persisted exhaustive search matches. Follow nextOffset until null AFTER job complete; partial results are preliminary.',
+    inputSchema:{type:'object',properties:{searchId:{type:'string',pattern:SEARCH_JOB_ID},
+      limit:{type:'integer',minimum:1,maximum:50,default:20},
+      offset:{type:'integer',minimum:0,maximum:10000000,default:0}},required:['searchId'],additionalProperties:false},annotations }
+);
+const routeFor = Object.freeze({ yandex_mail_folders: '/v1/mailboxes/discover', yandex_mail_list: '/v1/messages/list', yandex_mail_search: '/v1/messages/search', yandex_mail_read: '/v1/messages/read', yandex_mail_attachment: '/v1/messages/attachment', yandex_mail_search_all: '/v1/search-jobs/start', yandex_mail_search_status: '/v1/search-jobs/status', yandex_mail_search_results: '/v1/search-jobs/results' });
 const headers = { 'Content-Type': 'application/json', 'Cache-Control': 'private, no-store', 'X-Content-Type-Options': 'nosniff' };
 const json = (body, status = 200) => new Response(JSON.stringify(body), { status, headers });
 const error = (id, code, message, status = 200) => json({ jsonrpc: '2.0', id, error: { code, message } }, status);
