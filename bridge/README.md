@@ -6,7 +6,9 @@ The bridge is the owner's Cloudflare Worker for signed Site requests, Yandex OAu
 
 ## Production entry point
 
-`src/bridge-wrapper.mjs` composes request signatures, D1 state/token/nonce storage, mandatory rate-limit bindings, OAuth, and the IMAP core. Production builds create `dist/bridge-wrapper.js`. Do not deploy `src/worker.js` directly or add a shared bearer-token shortcut.
+`src/production-entry.mjs` is the Wrangler entrypoint exporting the authenticated `src/bridge-wrapper.mjs` handler and `ExhaustiveMailSearchWorkflow`. The wrapper composes request signatures, D1 state/token/nonce storage, mandatory rate-limit bindings, OAuth, and the IMAP core. Production builds create `dist/bridge-wrapper.js`. Do not deploy `src/worker.js` directly or add a shared bearer-token shortcut.
+
+Experimental exhaustive IMAP search requires a private D1 migration and `SEARCH_WORKFLOW` binding; see [exhaustive search](../docs/exhaustive-search.md). Existing read-only routes remain unchanged.
 
 The bridge always connects to `imap.yandex.com:993` with TLS and XOAUTH2. The only requested OAuth scope is `mail:imap_ro`. Mailboxes must be explicitly allowlisted. Reads use `EXAMINE`/`BODY.PEEK`; no SMTP, message deletion/movement, folder creation, or flag changes are exposed.
 
