@@ -8,11 +8,11 @@ const rpc = (method, params, extra = {}) => new Request('https://private.example
 const ownerHeaders = { 'oai-authenticated-user-id': 'owner-1', 'oai-authenticated-user-email': 'owner@example.invalid' };
 const authorization = ownerAuthorizer({ ownerUserId: 'owner-1', ownerEmail: 'owner@example.invalid' });
 
-test('discovery contains only five read tools and no private data', async () => {
+test('discovery contains eight owner-bound tools and no private data', async () => {
   const handler = createMcpHandler({ authorizeOwner: authorization, bridgeCall: () => { throw new Error('Should not call'); } });
   const response = await handler(rpc('tools/list'));
   const body = await response.json();
-  assert.equal(body.result.tools.length, 5);
+  assert.equal(body.result.tools.length, 8);
   assert.ok(body.result.tools.every(tool => tool.annotations.readOnlyHint));
   assert.equal(JSON.stringify(body).includes('owner@example.invalid'), false);
   assert.match(response.headers.get('cache-control'), /no-store/);
