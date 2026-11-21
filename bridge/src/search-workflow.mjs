@@ -43,7 +43,7 @@ export class ExhaustiveMailSearchWorkflow extends WorkflowEntrypoint {
       // A read-only grant expires deliberately without refresh tokens.
       const code = error?.message === 'Reauthorization required'
         ? 'reauthorization_required' : 'scan_interrupted';
-      await markSearchInterrupted(this.env, searchId, code);
+      await markSearchInterrupted(this.env, searchId, code, run);
       return { status: code };
     }
   }
