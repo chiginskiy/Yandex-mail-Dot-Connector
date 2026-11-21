@@ -25,9 +25,13 @@ const rpc = (name, args = {}, headers = {}) => new Request('https://private.exam
 const owner = { 'oai-authenticated-user-id': 'owner-1', 'oai-authenticated-user-email': 'owner@example.invalid' };
 
 test('five readonly tools expose folder discovery and bounded selected attachment inputs', () => {
-  assert.equal(TOOLS.length, 5);
-  assert.ok(TOOLS.every(tool => tool.annotations.readOnlyHint && !tool.annotations.destructiveHint));
+  assert.equal(TOOLS.length, 8);
+  assert.ok(TOOLS.every(tool => !tool.annotations.destructiveHint));
+  assert.ok(TOOLS.filter(tool => tool.name !== 'yandex_mail_search_all').every(tool => tool.annotations.readOnlyHint));
+  assert.equal(TOOLS.find(tool => tool.name === 'yandex_mail_search_all').annotations.readOnlyHint, false);
   assert.deepEqual(normalizeArgs('yandex_mail_folders', {}), {});
+  assert.deepEqual(normalizeArgs('yandex_mail_search_all',{mailboxes:['INBOX'],subject:'fixture'}),{mailboxes:['INBOX'],subject:'fixture',mode:'imap_server'});
+  assert.throws(()=>normalizeArgs('yandex_mail_search_all',{mailboxes:['INBOX'],mode:'visible_text_exact',text:'x'}));
   assert.deepEqual(normalizeArgs('yandex_mail_search', { to: 'recipient@example.invalid' }), { to: 'recipient@example.invalid', mailbox: 'INBOX', limit: 20 });
   assert.throws(() => normalizeArgs('yandex_mail_search', { to: 'bad\r\nTO' }));
   assert.throws(() => normalizeArgs('yandex_mail_folders', { mailbox: 'Sent' }));
