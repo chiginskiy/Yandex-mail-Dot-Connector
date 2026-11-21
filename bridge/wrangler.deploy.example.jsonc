@@ -1,6 +1,6 @@
 {
   "name": "yandex-mail-readonly-bridge",
-  "main": "src/bridge-wrapper.mjs",
+  "main": "src/production-entry.mjs",
   "compatibility_date": "2026-09-01",
   "compatibility_flags": ["nodejs_compat"],
   "workers_dev": true,
@@ -20,6 +20,7 @@
     "SITE_ORIGIN": "https://REPLACE_WITH_PRIVATE_SITE_HOST",
     "BRIDGE_ORIGIN": "https://REPLACE_WITH_WORKER_HOST"
   },
+  "workflows": [{"name":"yandex-exhaustive-search","binding":"SEARCH_WORKFLOW","class_name":"ExhaustiveMailSearchWorkflow"}],
   "d1_databases": [{
     "binding": "DB",
     "database_name": "yandex-mail-readonly-bridge",
