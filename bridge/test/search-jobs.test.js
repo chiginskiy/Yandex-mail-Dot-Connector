@@ -37,7 +37,7 @@ function setup() {
   const fakeClient=()=>({
     mailbox:{readOnly:true,uidValidity:42,uidNext:2201},
     async connect(){},close(){},
-    async getMailboxLock(mailbox,options){assert.equal(mailbox,'INBOX');assert.equal(options.readOnly,true);return {release(){}};},
+    async getMailboxLock(mailbox,options){assert.ok(['INBOX','Sent'].includes(mailbox));assert.equal(options.readOnly,true);return {release(){}};},
     async search(criteria) {
       assert.equal(criteria.subject,'synthetic');const [low,high]=criteria.uid.split(':').map(Number);
       return Array.from({length:high-low+1},(_,i)=>low+i);
@@ -100,4 +100,41 @@ test('changed UIDVALIDITY cannot be certified as complete',async()=>{
     await assert.rejects(scanOneWindow(f.env,started.searchId,{createClient:changed}),/uid_validity_changed/);
     assert.equal((await f.call('status',{searchId:started.searchId})).complete,false);
   }finally{f.sqlite.close();}
+});
+
+test('sparse 100,000-UID mailbox continues past 99 empty windows to find oldest match',async()=>{
+  const f=setup();
+  try {
+    const started=await f.call('start',{mailboxes:['INBOX'],mode:'imap_server',subject:'synthetic'});
+    const sparse=()=>{
+      const client=f.fakeClient();client.mailbox.uidNext=100001;
+      client.search=async criteria=>{
+        const [lo,hi]=criteria.uid.split(':').map(Number);
+        return [1,50001,100000].filter(uid=>lo<=uid && uid<=hi);
+      };
+      return client;
+    };
+    for(let i=0;i<101;i++) await scanOneWindow(f.env,started.searchId,{createClient:sparse});
+    const done=await f.call('status',{searchId:started.searchId});
+    assert.equal(done.status,'complete');assert.equal(done.matchedTotal,3);
+    assert.equal(done.folders[0].windowsDone,100);
+    const page=await f.call('results',{searchId:started.searchId,limit:50});
+    assert.deepEqual(page.messages.map(x=>x.uid),[100000,50001,1]);
+  } finally {f.sqlite.close();}
+});
+test('two allowlisted mailboxes are both traversed without merging equal UIDs',async()=>{
+  const f=setup();
+  try {
+    const started=await f.call('start',{mailboxes:['INBOX','Sent'],mode:'imap_server',subject:'synthetic'});
+    const short=()=>{const client=f.fakeClient();client.mailbox.uidNext=101;return client;};
+    for(let i=0;i<3;i++) await scanOneWindow(f.env,started.searchId,{createClient:short});
+    const done=await f.call('status',{searchId:started.searchId});
+    assert.equal(done.complete,true);assert.equal(done.matchedTotal,200);
+    assert.deepEqual(done.scope,['INBOX','Sent']);
+    assert.equal(done.foldersCompleted,2);
+    const first=await f.call('results',{searchId:started.searchId,limit:50});
+    assert.ok(first.messages.every(m=>m.mailbox==='INBOX'));
+    const last=await f.call('results',{searchId:started.searchId,limit:50,offset:150});
+    assert.ok(last.messages.every(m=>m.mailbox==='Sent'));
+  } finally {f.sqlite.close();}
 });
