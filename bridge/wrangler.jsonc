@@ -1,6 +1,6 @@
 {
   "name": "yandex-mail-readonly-bridge",
-  "main": "src/bridge-wrapper.mjs",
+  "main": "src/production-entry.mjs",
   "compatibility_date": "2026-09-01",
   "compatibility_flags": ["nodejs_compat"],
   "workers_dev": false,
@@ -10,5 +10,6 @@
     {"name":"PERIMETER_LIMITER","namespace_id":"71001","simple":{"limit":120,"period":60}},
     {"name":"OWNER_LIMITER","namespace_id":"71002","simple":{"limit":30,"period":60}}
   ],
+  "workflows": [{"name":"yandex-exhaustive-search","binding":"SEARCH_WORKFLOW","class_name":"ExhaustiveMailSearchWorkflow"}],
   "vars": { "ALLOWED_MAILBOXES": "[\"INBOX\"]" }
 }
