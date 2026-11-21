@@ -200,8 +200,8 @@ export async function scanOneWindow(env, searchId, options = {}) {
   } finally { lock?.release(); client.close(); }
 }
 
-export async function markSearchInterrupted(env, searchId, code) {
+export async function markSearchInterrupted(env, searchId, code, run) {
   const safeCode = code === 'reauthorization_required' ? code : 'scan_interrupted';
-  await env.DB.prepare("UPDATE search_jobs SET status=?, error_code=?, updated_at=? WHERE id=? AND status IN ('queued','running')")
-    .bind(safeCode==='reauthorization_required'?'reauthorization_required':'incomplete',safeCode,Date.now(),searchId).run();
+  await env.DB.prepare("UPDATE search_jobs SET status=?, error_code=?, updated_at=? WHERE id=? AND run=? AND status IN ('queued','running')")
+    .bind(safeCode==='reauthorization_required'?'reauthorization_required':'incomplete',safeCode,Date.now(),searchId,run).run();
 }
