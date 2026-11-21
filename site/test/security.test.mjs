@@ -13,7 +13,8 @@ test('discovery contains eight owner-bound tools and no private data', async () 
   const response = await handler(rpc('tools/list'));
   const body = await response.json();
   assert.equal(body.result.tools.length, 8);
-  assert.ok(body.result.tools.every(tool => tool.annotations.readOnlyHint));
+  assert.ok(body.result.tools.filter(tool => tool.name !== 'yandex_mail_search_all').every(tool => tool.annotations.readOnlyHint));
+  assert.equal(body.result.tools.find(tool => tool.name === 'yandex_mail_search_all').annotations.readOnlyHint, false);
   assert.equal(JSON.stringify(body).includes('owner@example.invalid'), false);
   assert.match(response.headers.get('cache-control'), /no-store/);
 });
