@@ -6,6 +6,7 @@ import { createOAuthHandler, accessTokenProvider } from './oauth.mjs';
 import { verifyBridgeRequest } from './signing.mjs';
 import { requireRateLimit } from './rate-limit.js';
 import { BridgeError } from './errors.js';
+import { handleSearchJobRequest } from './search-jobs.mjs';
 
 export function createAuthenticatedBridge({ coreFactory = createWorker, validateToken = verifyYandexToken, storeFor = env => createBridgeStore(env.DB), fetchImpl = fetch } = {}) {
   return { async fetch(request, env) {
@@ -35,6 +36,9 @@ export function createAuthenticatedBridge({ coreFactory = createWorker, validate
           authorizeStart: async (req, body) => await verify(req, body) ? { userId: env.OWNER_SITE_USER_ID, siteId: env.SITE_ID } : null,
           verifyMailboxToken: validateToken, store, fetchImpl
         })(request);
+      }
+      if (url.pathname.startsWith('/v1/search-jobs/')) {
+        return await handleSearchJobRequest(request, env, verify);
       }
       const core = coreFactory({
         authorizeRequest: (req, _env, bytes) => verify(req, new TextDecoder('utf-8', { fatal: true }).decode(bytes)),
