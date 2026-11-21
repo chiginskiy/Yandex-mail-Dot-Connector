@@ -62,6 +62,184 @@ export const TOOLS = [
     }, required: ['uid', 'uidValidity', 'part'], additionalProperties: false }, annotations
   }
 ];
+
+const SEARCH_JOB_ID = '^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}{ yandex_mail_folders: '/v1/mailboxes/discover', yandex_mail_list: '/v1/messages/list', yandex_mail_search: '/v1/messages/search', yandex_mail_read: '/v1/messages/read', yandex_mail_attachment: '/v1/messages/attachment', yandex_mail_search_all: '/v1/search-jobs/start', yandex_mail_search_status: '/v1/search-jobs/status', yandex_mail_search_results: '/v1/search-jobs/results' });
+const headers = { 'Content-Type': 'application/json', 'Cache-Control': 'private, no-store', 'X-Content-Type-Options': 'nosniff' };
+const json = (body, status = 200) => new Response(JSON.stringify(body), { status, headers });
+const error = (id, code, message, status = 200) => json({ jsonrpc: '2.0', id, error: { code, message } }, status);
+const validInteger = n => Number.isInteger(n) && n >= 1 && n <= 4294967295;
+const validText = (value, max) => typeof value === 'string' && value.length > 0 && value.length <= max && !/[\x00-\x1f\x7f]/.test(value);
+
+export function normalizeArgs(name, raw) {
+  const tool = TOOLS.find(tool => tool.name === name);
+  if (!tool || !raw || typeof raw !== 'object' || Array.isArray(raw)) throw new Error('Invalid arguments');
+  if (Object.keys(raw).some(key => !Object.hasOwn(tool.inputSchema.properties, key))) throw new Error('Unexpected argument');
+  if (name === 'yandex_mail_folders') return {};
+
+  if (name === 'yandex_mail_search_all') {
+    if (Object.hasOwn(raw, 'resumeSearchId')) {
+      if (Object.keys(raw).length !== 1 || typeof raw.resumeSearchId !== 'string' ||
+        !new RegExp(SEARCH_JOB_ID).test(raw.resumeSearchId)) throw new Error('Invalid search resume ID');
+      return raw;
+    }
+    if (!Array.isArray(raw.mailboxes) || raw.mailboxes.length < 1 || raw.mailboxes.length > 20 ||
+      raw.mailboxes.some(x=>!validText(x,120)) || new Set(raw.mailboxes).size !== raw.mailboxes.length)
+      throw new Error('Invalid search mailboxes');
+    if (raw.mode !== undefined && raw.mode !== 'imap_server') throw new Error('Invalid search mode');
+    if (!SEARCH_FILTERS.some(k=>Object.hasOwn(raw,k))) throw new Error('Search filter required');
+    for (const key of ['from','to','subject','text'])
+      if (raw[key]!==undefined && !validText(raw[key],256)) throw new Error('Invalid search term');
+    for (const key of ['since','before']) if (raw[key]!==undefined) {
+      if (!/^\d{4}-\d{2}-\d{2}$/.test(raw[key]) ||
+          !Number.isFinite(Date.parse(raw[key]+'T00:00:00.000Z')) ||
+          new Date(raw[key]+'T00:00:00.000Z').toISOString().slice(0,10)!==raw[key])
+        throw new Error('Invalid search date');
+    }
+    if (raw.since && raw.before && raw.since>=raw.before) throw new Error('Invalid search dates');
+    if (raw.unseen!==undefined && typeof raw.unseen!=='boolean') throw new Error('Invalid unseen');
+    return {...raw, mode:'imap_server'};
+  }
+  if (name === 'yandex_mail_search_status' || name === 'yandex_mail_search_results') {
+    if (typeof raw.searchId !== 'string' || !new RegExp(SEARCH_JOB_ID).test(raw.searchId)) throw new Error('Invalid search ID');
+    if (name === 'yandex_mail_search_status') return {searchId:raw.searchId};
+    const limit=raw.limit ?? 20, offset=raw.offset ?? 0;
+    if (!Number.isInteger(limit)||limit<1||limit>50||!Number.isInteger(offset)||offset<0||offset>10000000)
+      throw new Error('Invalid results page');
+    return {searchId:raw.searchId,limit,offset};
+  }
+
+  const args = { ...raw, mailbox: raw.mailbox ?? 'INBOX' };
+  if (!validText(args.mailbox, 120)) throw new Error('Invalid mailbox');
+  if (name === 'yandex_mail_read' || name === 'yandex_mail_attachment') {
+    if (!validInteger(args.uid) || typeof args.uidValidity !== 'string' || !/^[1-9][0-9]{0,9}$/.test(args.uidValidity) || !validInteger(Number(args.uidValidity))) throw new Error('Invalid message identity');
+    if (name === 'yandex_mail_attachment') {
+      if (!validText(args.part, 59) || !/^[1-9][0-9]{0,4}(\.[1-9][0-9]{0,4}){0,9}$/.test(args.part)) throw new Error('Invalid attachment part');
+      args.offset ??= 0;
+      if (!Number.isInteger(args.offset) || args.offset < 0 || args.offset > MAX_ENCODED_ATTACHMENT) throw new Error('Invalid attachment offset');
+    }
+    return args;
+  }
+  args.limit ??= 20;
+  if (!Number.isInteger(args.limit) || args.limit < 1 || args.limit > 50) throw new Error('Invalid limit');
+  if (args.beforeUid !== undefined && !validInteger(args.beforeUid)) throw new Error('Invalid cursor');
+  for (const key of ['from', 'to', 'subject', 'text']) if (args[key] !== undefined && !validText(args[key], 256)) throw new Error('Invalid search text');
+  for (const key of ['since', 'before']) {
+    if (args[key] === undefined) continue;
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(args[key])) throw new Error('Invalid date');
+    const date = new Date(args[key] + 'T00:00:00.000Z');
+    if (!Number.isFinite(date.getTime()) || date.toISOString().slice(0, 10) !== args[key]) throw new Error('Invalid date');
+  }
+  if (args.since && args.before && args.since >= args.before) throw new Error('Invalid date range');
+  if (args.unseen !== undefined && typeof args.unseen !== 'boolean') throw new Error('Invalid unread filter');
+  if (name === 'yandex_mail_search' && !['from', 'to', 'subject', 'text', 'since', 'before', 'unseen'].some(key => args[key] !== undefined)) throw new Error('Search filter required');
+  return args;
+}
+
+export function ownerAuthorizer({ ownerUserId, ownerEmail } = {}) {
+  // These headers are trusted ONLY behind Sites' authenticated hosting boundary.
+  // A raw Worker exposing this function directly would be insecure.
+  return request => {
+    const userId = request.headers.get('oai-authenticated-user-id');
+    const email = request.headers.get('oai-authenticated-user-email');
+    if ((!ownerUserId && !ownerEmail) || !userId) return null;
+    if (ownerUserId && userId !== ownerUserId) return null;
+    if (ownerEmail && (!email || email.toLowerCase() !== ownerEmail.toLowerCase())) return null;
+    return { userId };
+  };
+}
+
+
+export function createMcpHandler({ authorizeOwner, bridgeCall, allowedOrigins = [] }) {
+  return async function handle(request) {
+    const url = new URL(request.url);
+    if (url.pathname !== '/mcp') return json({ error: 'Not found' }, 404);
+    const origin = request.headers.get('origin');
+    if (origin && origin !== url.origin && !allowedOrigins.includes(origin)) return json({ error: 'Forbidden origin' }, 403);
+    if (request.method !== 'POST') return new Response(null, { status: 405, headers: { ...headers, Allow: 'POST' } });
+    const protocol = request.headers.get('MCP-Protocol-Version');
+    if (protocol && !PROTOCOLS.includes(protocol)) return error(null, -32600, 'Unsupported protocol version', 400);
+    if (!request.headers.get('content-type')?.toLowerCase().startsWith('application/json')) return error(null, -32600, 'Expected JSON', 415);
+    let call;
+    try { call = JSON.parse(await limitedText(request.body, LIMIT)); }
+    catch { return error(null, -32700, 'Invalid or oversized JSON', 400); }
+    if (!call || Array.isArray(call) || call.jsonrpc !== '2.0' || typeof call.method !== 'string' || (Object.hasOwn(call, 'id') && typeof call.id !== 'string' && typeof call.id !== 'number')) return error(null, -32600, 'Invalid request', 400);
+    if (!Object.hasOwn(call, 'id')) {
+      if (['notifications/initialized', 'notifications/cancelled'].includes(call.method)) return new Response(null, { status: 202, headers });
+      return error(null, -32600, 'Unsupported notification', 400);
+    }
+    if (call.method === 'initialize') return json({ jsonrpc: '2.0', id: call.id, result: {
+      protocolVersion: PROTOCOLS.includes(call.params?.protocolVersion) ? call.params.protocolVersion : PROTOCOLS[0],
+      capabilities: { tools: {} }, serverInfo: { name: 'private-yandex-readonly-mail', version: '0.2.2' }
+    } });
+    if (call.method === 'ping') return json({ jsonrpc: '2.0', id: call.id, result: {} });
+    if (call.method === 'tools/list') return json({ jsonrpc: '2.0', id: call.id, result: { tools: TOOLS } });
+    if (call.method !== 'tools/call') return error(call.id, -32601, 'Method not found');
+    const owner = await authorizeOwner(request);
+    if (!owner) return error(call.id, -32001, 'Owner authentication required', request.headers.has('oai-authenticated-user-id') ? 403 : 401);
+    const name = call.params?.name;
+    if (!Object.hasOwn(routeFor, name)) return error(call.id, -32602, 'Unknown tool');
+    let args;
+    try { args = normalizeArgs(name, call.params?.arguments ?? {}); }
+    catch { return error(call.id, -32602, 'Invalid tool arguments'); }
+    try {
+      const result = await bridgeCall(routeFor[name], args, owner);
+      if (!result || typeof result !== 'object' || Array.isArray(result)) throw new Error('Invalid bridge response');
+      const text = JSON.stringify(result);
+      if (new TextEncoder().encode(text).byteLength > MAX_BRIDGE_RESULT) throw new Error('Bridge response too large');
+      return json({ jsonrpc: '2.0', id: call.id, result: { content: [{ type: 'text', text }], isError: false } });
+    } catch (failure) {
+      // Never pass provider errors, URLs, account details, or token bodies through.
+      if (failure?.status === 429 && failure?.code === 'rate_limited') return json({ jsonrpc: '2.0', id: call.id, result: {
+        content: [{ type: 'text', text: 'Mail request rate limited. Retry after the bounded delay.' }],
+        structuredContent: { status: 'rate_limited', httpStatus: 429, retryAfterSeconds: safeRetryAfterSeconds(failure.retryAfterSeconds) }, isError: true
+      } });
+      if (failure?.code === 'configuration_required') return json({ jsonrpc: '2.0', id: call.id, result: { content: [{ type: 'text', text: 'Cloudflare connection setup is incomplete. Open your private connection page to finish setup.' }], structuredContent: { status: 'configuration_required' }, isError: true } });
+      return json({ jsonrpc: '2.0', id: call.id, result: { content: [{ type: 'text', text: 'Mail is unavailable. Check the private connection setup and try again.' }], isError: true } });
+    }
+  };
+}
+
+export function createSignedBridgeClient({ origin, siteId, getSigningKey, signRequest, fetchImpl = fetch }) {
+  const base = new URL(origin);
+  if (base.protocol !== 'https:' || base.username || base.password || base.pathname !== '/' || base.search || base.hash) throw new Error('Invalid bridge origin');
+  return async (path, args, owner) => {
+    if (!Object.values(routeFor).includes(path)) throw new Error('Forbidden bridge route');
+    const request = await signRequest({ url: new URL(path, base).href, body: JSON.stringify(args), privateKey: await getSigningKey(owner.userId), siteId, ownerId: owner.userId });
+    const response = await fetchImpl(request, { redirect: 'manual', signal: AbortSignal.timeout(25000) });
+    if (response.status === 429) {
+      const failure = new Error('Bridge request rate limited');
+      failure.code = 'rate_limited';
+      failure.status = 429;
+      failure.retryAfterSeconds = safeRetryAfterSeconds(response.headers.get('retry-after'));
+      // Do not read, parse, or forward an upstream error body, even if JSON.
+      await response.body?.cancel().catch(() => {});
+      throw failure;
+    }
+    if (!response.ok || !response.headers.get('content-type')?.startsWith('application/json')) throw new Error('Bridge unavailable');
+    return JSON.parse(await limitedText(response.body, MAX_BRIDGE_RESULT));
+  };
+}
+;
+const SEARCH_FILTERS = ['from','to','subject','text','since','before','unseen'];
+const SEARCH_FILTER_PROPERTIES = Object.fromEntries(SEARCH_FILTERS.map(name=>[name,
+  name==='unseen' ? {type:'boolean'} : name==='since'||name==='before' ? {type:'string',format:'date'} : {type:'string',minLength:1,maxLength:256}]));
+TOOLS.push(
+  { name:'yandex_mail_search_all', title:'Exhaustive Yandex mail search',
+    description:'Start an owner-only durable exhaustive IMAP server search over ALL UID windows in selected allowlisted folders. Returns a searchId, NOT a final list. Poll yandex_mail_search_status; then page through ALL matches with yandex_mail_search_results. Complete means every window was scanned. IMAP BODY search is server-defined and may differ from HTML visible text; do not claim full visible-text accuracy. To resume an interrupted job call with resumeSearchId only. Does not change mail.',
+    inputSchema:{type:'object',properties:{ mailboxes:{type:'array',items:{type:'string',minLength:1,maxLength:120},minItems:1,maxItems:20},
+      mode:{type:'string',enum:['imap_server'],default:'imap_server'},resumeSearchId:{type:'string',pattern:SEARCH_JOB_ID},
+      ...SEARCH_FILTER_PROPERTIES },additionalProperties:false},
+    annotations:{...annotations,readOnlyHint:false}},
+  { name:'yandex_mail_search_status', title:'Exhaustive search progress',
+    description:'Get owner-bound progress, total matches, and explicit completeness for an exhaustive searchId. Never say all messages found unless status=complete AND complete=true.',
+    inputSchema:{type:'object',properties:{searchId:{type:'string',pattern:SEARCH_JOB_ID}},required:['searchId'],additionalProperties:false},annotations },
+  { name:'yandex_mail_search_results', title:'Page through ALL exhaustive search matches',
+    description:'Fetch a page of persisted exhaustive-search matches in deterministic order. Follow nextOffset until null AFTER the job is complete. Partial results are preliminary; matchedTotal is the entire stored count.',
+    inputSchema:{type:'object',properties:{searchId:{type:'string',pattern:SEARCH_JOB_ID},
+      limit:{type:'integer',minimum:1,maximum:50,default:20},
+      offset:{type:'integer',minimum:0,maximum:10000000,default:0}},required:['searchId'],additionalProperties:false},annotations }
+);
+
 const routeFor = Object.freeze({ yandex_mail_folders: '/v1/mailboxes/discover', yandex_mail_list: '/v1/messages/list', yandex_mail_search: '/v1/messages/search', yandex_mail_read: '/v1/messages/read', yandex_mail_attachment: '/v1/messages/attachment' });
 const headers = { 'Content-Type': 'application/json', 'Cache-Control': 'private, no-store', 'X-Content-Type-Options': 'nosniff' };
 const json = (body, status = 200) => new Response(JSON.stringify(body), { status, headers });
