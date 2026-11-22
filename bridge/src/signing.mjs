@@ -8,7 +8,11 @@ function decode(value) {
   return Uint8Array.from(atob(value.replaceAll('-', '+').replaceAll('_', '/') + '=='), c => c.charCodeAt(0));
 }
 const component = value => typeof value === 'string' && /^[A-Za-z0-9._:@-]{1,200}$/.test(value);
-const routes = new Set(['/v1/messages/list', '/v1/messages/search', '/v1/messages/read', '/v1/mailboxes/discover', '/v1/messages/attachment', '/v1/oauth/start']);
+const routes = new Set([
+  '/v1/messages/list', '/v1/messages/search', '/v1/messages/read',
+  '/v1/mailboxes/discover', '/v1/messages/attachment', '/v1/oauth/start',
+  '/v1/search-jobs/start', '/v1/search-jobs/status', '/v1/search-jobs/results'
+]);
 
 function safeUrl(url) {
   const parsed = new URL(url);
