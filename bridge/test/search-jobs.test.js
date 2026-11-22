@@ -2,7 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {DatabaseSync} from 'node:sqlite';
 import {readFileSync} from 'node:fs';
-import {scanOneWindow, handleSearchJobRequest, validateSearchJobInput} from '../src/search-jobs.mjs';
+import {scanOneWindow, handleSearchJobRequest, validateSearchJobInput, markSearchInterrupted} from '../src/search-jobs.mjs';
 
 function setup() {
   const sqlite = new DatabaseSync(':memory:');
@@ -137,4 +137,42 @@ test('two allowlisted mailboxes are both traversed without merging equal UIDs',a
     const last=await f.call('results',{searchId:started.searchId,limit:50,offset:150});
     assert.ok(last.messages.every(m=>m.mailbox==='Sent'));
   } finally {f.sqlite.close();}
+});
+
+test('a failed long scan resumes at the persisted UID checkpoint without losing matches', async () => {
+  const f = setup();
+  try {
+    const started = await f.call('start', {
+      mailboxes: ['INBOX'], mode: 'imap_server', subject: 'synthetic'
+    });
+    assert.equal(started.status, 'queued');
+    await scanOneWindow(f.env, started.searchId, { createClient: f.fakeClient });
+    const checkpoint = await f.call('status', { searchId: started.searchId });
+    assert.equal(checkpoint.matchedTotal, 1000);
+    assert.equal(checkpoint.folders[0].nextHighUid, 1200);
+
+    await markSearchInterrupted(f.env, started.searchId, 'scan_interrupted', 0);
+    assert.equal((await f.call('status', { searchId: started.searchId })).status, 'incomplete');
+
+    const resumed = await f.call('start', { resumeSearchId: started.searchId });
+    assert.equal(resumed.searchId, started.searchId);
+    assert.equal(resumed.status, 'queued');
+    assert.equal(resumed.matchedTotal, 1000);
+    assert.equal(resumed.folders[0].nextHighUid, 1200);
+
+    for (let i = 0; i < 3; i++) {
+      await scanOneWindow(f.env, started.searchId, { createClient: f.fakeClient });
+    }
+    const finished = await f.call('status', { searchId: started.searchId });
+    assert.equal(finished.status, 'complete');
+    assert.equal(finished.complete, true);
+    assert.equal(finished.matchedTotal, 2200);
+    assert.equal(finished.folders[0].windowsDone, 3);
+    const distinct = f.sqlite.prepare(
+      'SELECT COUNT(*) AS n FROM search_results WHERE job_id = ?'
+    ).get(started.searchId);
+    assert.equal(distinct.n, 2200);
+  } finally {
+    f.sqlite.close();
+  }
 });
