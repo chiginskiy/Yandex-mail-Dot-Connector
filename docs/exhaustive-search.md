@@ -42,9 +42,14 @@ A failed or interrupted job can be resumed via
   message bodies. Only summary metadata is retained in bridge D1.
 - Jobs are retained for seven days and removed on a subsequent job
   creation. This is NOT an autonomous scheduled retention service.
-- At most one active scan per owner. Each workflow runs a bounded number
-  of windows then continues via another Workflow instance. Shared
-  owner rate limits and read-only IMAP access are preserved.
+- At most one active scan per owner. Each Workflow instance handles at most
+  **12 UID windows**, then deterministically schedules another instance with
+  a fresh subrequest budget, while retaining all progress/results in private D1.
+  On the Workers Free plan, Cloudflare limits each instance to 50 external
+  subrequests and 1,000 service subrequests, **regardless of the separate
+  Workflow-step limit**. The small per-instance cap leaves headroom for
+  retries, D1, and IMAP connections; high-match-density windows still need
+  workload acceptance. Owner rate limits and read-only IMAP are preserved.
 
 ## Deployment — owner action required
 
