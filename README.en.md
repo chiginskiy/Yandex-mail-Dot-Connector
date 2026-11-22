@@ -2,9 +2,11 @@
 
 [Русский](README.md) · [Installation](docs/installation.en.md) · [Architecture](docs/architecture.md) · [API](docs/api.md) · [Security](docs/security.md)
 
-A private Yandex Mail connection for dot, exposing five read-only MCP tools for folders, message lists, search, message text, and selected attachments. Every installation uses the owner's own infrastructure and accounts.
+A private Yandex Mail connection for dot, exposing five original read-only MCP tools for folders, message lists, search, message text, and selected attachments. Every installation uses the owner's own infrastructure and accounts.
 
 **Status: `1.0.0-rc.1`, the first unified release candidate.** Components: bridge `1.1.2`, Site adapter `0.2.2`. This is an independent project, not an official Yandex, OpenAI, or Cloudflare product. Project license: [Apache-2.0](LICENSE).
+
+**Experimental PR #33:** three additional tools start an exhaustive IMAP search job, report completion and page through every persisted match. Owner Cloudflare Workflows, a private D1 migration and a private Site update are required. See [scope and deployment](docs/exhaustive-search.md). This is not full visible-text accuracy yet.
 
 ## Before you install
 

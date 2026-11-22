@@ -1,5 +1,7 @@
 # MCP and bridge API
 
+For the three experimental exhaustive-search tools and durable job deployment, see [Exhaustive IMAP search](exhaustive-search.md). The original bounded search API below remains unchanged.
+
 [Overview](../README.en.md) · [Architecture](architecture.md) · [Troubleshooting](troubleshooting.md)
 
 This API is for a single authorized owner through a private Sites plugin. Examples use synthetic values. Replace message identity only with values from a real authorized tool result; never guess a UID, UIDVALIDITY, attachment part, or folder path.

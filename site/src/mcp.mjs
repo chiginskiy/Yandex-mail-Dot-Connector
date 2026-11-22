@@ -62,7 +62,28 @@ export const TOOLS = [
     }, required: ['uid', 'uidValidity', 'part'], additionalProperties: false }, annotations
   }
 ];
-const routeFor = Object.freeze({ yandex_mail_folders: '/v1/mailboxes/discover', yandex_mail_list: '/v1/messages/list', yandex_mail_search: '/v1/messages/search', yandex_mail_read: '/v1/messages/read', yandex_mail_attachment: '/v1/messages/attachment' });
+
+const SEARCH_JOB_ID = '^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$';
+const SEARCH_FILTERS = ['from','to','subject','text','since','before','unseen'];
+const SEARCH_FILTER_PROPERTIES = Object.fromEntries(SEARCH_FILTERS.map(name=>[name,
+  name==='unseen' ? {type:'boolean'} : name==='since'||name==='before' ? {type:'string',format:'date'} : {type:'string',minLength:1,maxLength:256}]));
+TOOLS.push(
+  { name:'yandex_mail_search_all', title:'Exhaustive Yandex mail search',
+    description:'Starts an owner-only exhaustive IMAP server search over ALL UID windows in selected allowlisted folders. Returns searchId, not a final result; call yandex_mail_search_status and then yandex_mail_search_results until nextOffset is null. Complete means every window scanned. IMAP BODY semantics can differ from visible HTML text. To resume interrupted job call with resumeSearchId only. Does not change mail.',
+    inputSchema:{type:'object',properties:{ mailboxes:{type:'array',items:{type:'string',minLength:1,maxLength:120},minItems:1,maxItems:20},
+      mode:{type:'string',enum:['imap_server'],default:'imap_server'},resumeSearchId:{type:'string',pattern:SEARCH_JOB_ID},
+      ...SEARCH_FILTER_PROPERTIES },additionalProperties:false},
+    annotations:{...annotations,readOnlyHint:false}},
+  { name:'yandex_mail_search_status', title:'Exhaustive search progress',
+    description:'Get owner-bound progress and explicit completeness for a searchId. Never say all messages found unless status=complete AND complete=true.',
+    inputSchema:{type:'object',properties:{searchId:{type:'string',pattern:SEARCH_JOB_ID}},required:['searchId'],additionalProperties:false},annotations },
+  { name:'yandex_mail_search_results', title:'Page through ALL exhaustive search matches',
+    description:'Fetch a page of persisted exhaustive search matches. Follow nextOffset until null AFTER job complete; partial results are preliminary.',
+    inputSchema:{type:'object',properties:{searchId:{type:'string',pattern:SEARCH_JOB_ID},
+      limit:{type:'integer',minimum:1,maximum:50,default:20},
+      offset:{type:'integer',minimum:0,maximum:Number.MAX_SAFE_INTEGER,default:0}},required:['searchId'],additionalProperties:false},annotations }
+);
+const routeFor = Object.freeze({ yandex_mail_folders: '/v1/mailboxes/discover', yandex_mail_list: '/v1/messages/list', yandex_mail_search: '/v1/messages/search', yandex_mail_read: '/v1/messages/read', yandex_mail_attachment: '/v1/messages/attachment', yandex_mail_search_all: '/v1/search-jobs/start', yandex_mail_search_status: '/v1/search-jobs/status', yandex_mail_search_results: '/v1/search-jobs/results' });
 const headers = { 'Content-Type': 'application/json', 'Cache-Control': 'private, no-store', 'X-Content-Type-Options': 'nosniff' };
 const json = (body, status = 200) => new Response(JSON.stringify(body), { status, headers });
 const error = (id, code, message, status = 200) => json({ jsonrpc: '2.0', id, error: { code, message } }, status);
@@ -74,6 +95,39 @@ export function normalizeArgs(name, raw) {
   if (!tool || !raw || typeof raw !== 'object' || Array.isArray(raw)) throw new Error('Invalid arguments');
   if (Object.keys(raw).some(key => !Object.hasOwn(tool.inputSchema.properties, key))) throw new Error('Unexpected argument');
   if (name === 'yandex_mail_folders') return {};
+
+  if (name === 'yandex_mail_search_all') {
+    if (Object.hasOwn(raw, 'resumeSearchId')) {
+      if (Object.keys(raw).length !== 1 || typeof raw.resumeSearchId !== 'string' ||
+        !new RegExp(SEARCH_JOB_ID).test(raw.resumeSearchId)) throw new Error('Invalid search resume ID');
+      return raw;
+    }
+    if (!Array.isArray(raw.mailboxes) || raw.mailboxes.length < 1 || raw.mailboxes.length > 20 ||
+      raw.mailboxes.some(x=>!validText(x,120)) || new Set(raw.mailboxes).size !== raw.mailboxes.length)
+      throw new Error('Invalid search mailboxes');
+    if (raw.mode !== undefined && raw.mode !== 'imap_server') throw new Error('Invalid search mode');
+    if (!SEARCH_FILTERS.some(k=>Object.hasOwn(raw,k))) throw new Error('Search filter required');
+    for (const key of ['from','to','subject','text'])
+      if (raw[key]!==undefined && !validText(raw[key],256)) throw new Error('Invalid search term');
+    for (const key of ['since','before']) if (raw[key]!==undefined) {
+      if (!/^\d{4}-\d{2}-\d{2}$/.test(raw[key]) ||
+          !Number.isFinite(Date.parse(raw[key]+'T00:00:00.000Z')) ||
+          new Date(raw[key]+'T00:00:00.000Z').toISOString().slice(0,10)!==raw[key])
+        throw new Error('Invalid search date');
+    }
+    if (raw.since && raw.before && raw.since>=raw.before) throw new Error('Invalid search dates');
+    if (raw.unseen!==undefined && typeof raw.unseen!=='boolean') throw new Error('Invalid unseen');
+    return {...raw, mode:'imap_server'};
+  }
+  if (name === 'yandex_mail_search_status' || name === 'yandex_mail_search_results') {
+    if (typeof raw.searchId !== 'string' || !new RegExp(SEARCH_JOB_ID).test(raw.searchId)) throw new Error('Invalid search ID');
+    if (name === 'yandex_mail_search_status') return {searchId:raw.searchId};
+    const limit=raw.limit ?? 20, offset=raw.offset ?? 0;
+    if (!Number.isInteger(limit)||limit<1||limit>50||!Number.isInteger(offset)||offset<0||offset>Number.MAX_SAFE_INTEGER)
+      throw new Error('Invalid results page');
+    return {searchId:raw.searchId,limit,offset};
+  }
+
   const args = { ...raw, mailbox: raw.mailbox ?? 'INBOX' };
   if (!validText(args.mailbox, 120)) throw new Error('Invalid mailbox');
   if (name === 'yandex_mail_read' || name === 'yandex_mail_attachment') {

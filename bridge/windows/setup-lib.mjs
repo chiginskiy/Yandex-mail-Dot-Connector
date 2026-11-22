@@ -29,6 +29,7 @@ export function configFor(state, vars = {}) {
       {name:'OWNER_LIMITER', namespace_id:state.namespaceIds[1], simple:{limit:30,period:60}}
     ],
     vars: {ALLOWED_MAILBOXES:'["INBOX"]', ...vars},
+    workflows: [{name:state.workerName+'-search', binding:'SEARCH_WORKFLOW', class_name:'ExhaustiveMailSearchWorkflow'}],
     ...(state.databaseId ? {d1_databases:[{binding:'DB',database_name:state.databaseName,database_id:state.databaseId}]} : {})
   };
 }

@@ -2,7 +2,9 @@
 
 Component version: **0.2.2**, included in unified release **1.0.0-rc.1**. [Installation](../docs/installation.en.md) · [Установка](../docs/installation.ru.md)
 
-This component provides the owner-only setup page, five MCP tools, and the signed client for the separate bridge. Its only persistent store is the Site signing-key table. OAuth exchange, mail tokens, and nonce storage belong to `../bridge/`.
+This component provides the owner-only setup page, five original MCP tools plus three experimental exhaustive-search job tools, and the signed client for the separate bridge. Its only persistent store is the Site signing-key table. OAuth exchange, mail tokens, and nonce storage belong to `../bridge/`.
+
+The three search-job tools depend on the owner's upgraded bridge, D1 migration and Cloudflare Workflow. See [exhaustive search](../docs/exhaustive-search.md). They are not evidence that a cloud deployment has been updated.
 
 ## Required hosting boundary
 
